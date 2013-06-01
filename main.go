@@ -110,5 +110,5 @@ func main() {
 
 	fmt.Printf("# Requests: %v\n", summary.numRequests)
 	fmt.Printf("Duration: %v\n", summary.duration)
-	fmt.Printf("Avergage Request Duration: %v\n", summary.avgRequestDuration)
+	fmt.Printf("Average Request Duration: %v\n", summary.avgRequestDuration)
 }
