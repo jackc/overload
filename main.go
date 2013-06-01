@@ -10,7 +10,70 @@ import (
 )
 
 var opts struct {
-	NumRequests int32 `short:"r" long:"num-requests" description:"Number of requests to make" default:"1"`
+	NumRequests int `short:"r" long:"num-requests" description:"Number of requests to make" default:"1"`
+}
+
+type result struct {
+	duration   time.Duration
+	statusCode int
+	bytesRead  int
+	err        error
+}
+
+type Summary struct {
+	numRequests          int
+	totalRequestDuration time.Duration
+	avgRequestDuration   time.Duration
+	duration             time.Duration
+}
+
+var requestChan chan *http.Request
+var resultChan chan *result
+var summaryChan chan *Summary
+var client *http.Client
+
+func doRequests() {
+	for request := range requestChan {
+		startTime := time.Now()
+		response, err := client.Do(request)
+		if err != nil {
+			resultChan <- &result{err: err}
+			continue
+
+		}
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			resultChan <- &result{err: err}
+			continue
+		}
+
+		resultChan <- &result{duration: time.Since(startTime), statusCode: response.StatusCode, bytesRead: len(body)}
+	}
+}
+
+func generateRequests(target string, numRequests int) {
+	request, err := http.NewRequest("GET", target, nil)
+	if err != nil {
+		panic("Bad target")
+	}
+	for i := 0; i < numRequests; i++ {
+		requestChan <- request
+	}
+	close(requestChan)
+}
+
+func summarizeResults(numRequests int, startTime time.Time) {
+	summary := new(Summary)
+
+	for i := 0; i < numRequests; i++ {
+		result := <-resultChan
+		summary.numRequests++
+		summary.totalRequestDuration += result.duration
+	}
+
+	summary.duration = time.Since(startTime)
+	summary.avgRequestDuration = time.Duration(int64(summary.totalRequestDuration) / int64(summary.numRequests))
+	summaryChan <- summary
 }
 
 func main() {
@@ -29,21 +92,18 @@ func main() {
 
 	target := args[0]
 
-	var response *http.Response
+	requestChan = make(chan *http.Request)
+	resultChan = make(chan *result)
+	summaryChan = make(chan *Summary)
+	client = &http.Client{}
 
-	startTime := time.Now()
+	go doRequests()
+	go generateRequests(target, opts.NumRequests)
+	go summarizeResults(opts.NumRequests, time.Now())
 
-	if response, err = http.Get(target); err != nil {
-		panic("Error")
-	}
+	summary := <-summaryChan
 
-	defer response.Body.Close()
-	var body []byte
-	if body, err = ioutil.ReadAll(response.Body); err != nil {
-		panic("Error")
-	}
-	fmt.Println(string(body))
-
-	duration := time.Since(startTime)
-	fmt.Println(duration)
+	fmt.Printf("# Requests: %v\n", summary.numRequests)
+	fmt.Printf("Duration: %v\n", summary.duration)
+	fmt.Printf("Avergage Request Duration: %v\n", summary.avgRequestDuration)
 }
