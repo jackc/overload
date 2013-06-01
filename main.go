@@ -11,6 +11,7 @@ import (
 
 var opts struct {
 	NumRequests int `short:"r" long:"num-requests" description:"Number of requests to make" default:"1"`
+	Concurrent  int `short:"c" long:"concurrent" description:"Number of concurrent connections to make" default:"1"`
 }
 
 type result struct {
@@ -97,9 +98,13 @@ func main() {
 	summaryChan = make(chan *Summary)
 	client = &http.Client{}
 
-	go doRequests()
+	startTime := time.Now()
+
+	for i := 0; i < opts.Concurrent; i++ {
+		go doRequests()
+	}
 	go generateRequests(target, opts.NumRequests)
-	go summarizeResults(opts.NumRequests, time.Now())
+	go summarizeResults(opts.NumRequests, startTime)
 
 	summary := <-summaryChan
 
