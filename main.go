@@ -26,6 +26,9 @@ type Summary struct {
 	totalRequestDuration time.Duration
 	avgRequestDuration   time.Duration
 	duration             time.Duration
+	numSuccesses         int
+	numFailures          int
+	numUnavailables      int
 }
 
 var requestChan chan *http.Request
@@ -69,11 +72,18 @@ func summarizeResults(numRequests int, startTime time.Time) {
 	for i := 0; i < numRequests; i++ {
 		result := <-resultChan
 		summary.numRequests++
-		summary.totalRequestDuration += result.duration
+		if result.err != nil {
+			summary.numUnavailables++
+		} else if result.statusCode >= 400 {
+			summary.numFailures++
+		} else {
+			summary.numSuccesses++
+			summary.totalRequestDuration += result.duration
+		}
 	}
 
 	summary.duration = time.Since(startTime)
-	summary.avgRequestDuration = time.Duration(int64(summary.totalRequestDuration) / int64(summary.numRequests))
+	summary.avgRequestDuration = time.Duration(int64(summary.totalRequestDuration) / int64(summary.numSuccesses))
 	summaryChan <- summary
 }
 
@@ -109,6 +119,9 @@ func main() {
 	summary := <-summaryChan
 
 	fmt.Printf("# Requests: %v\n", summary.numRequests)
+	fmt.Printf("# Successes: %v\n", summary.numSuccesses)
+	fmt.Printf("# Failures: %v\n", summary.numFailures)
+	fmt.Printf("# Unavailable: %v\n", summary.numUnavailables)
 	fmt.Printf("Duration: %v\n", summary.duration)
 	fmt.Printf("Average Request Duration: %v\n", summary.avgRequestDuration)
 }
