@@ -10,8 +10,9 @@ import (
 )
 
 var opts struct {
-	NumRequests int `short:"r" long:"num-requests" description:"Number of requests to make" default:"1"`
-	Concurrent  int `short:"c" long:"concurrent" description:"Number of concurrent connections to make" default:"1"`
+	NumRequests int  `short:"r" long:"num-requests" description:"Number of requests to make" default:"1"`
+	Concurrent  int  `short:"c" long:"concurrent" description:"Number of concurrent connections to make" default:"1"`
+	KeepAlive   bool `short:"k" long:"keep-alive" description:"Use keep alive connection"`
 }
 
 type result struct {
@@ -106,7 +107,8 @@ func main() {
 	requestChan = make(chan *http.Request)
 	resultChan = make(chan *result)
 	summaryChan = make(chan *Summary)
-	client = &http.Client{}
+	transport := &http.Transport{DisableKeepAlives: !opts.KeepAlive}
+	client = &http.Client{Transport: transport}
 
 	startTime := time.Now()
 
