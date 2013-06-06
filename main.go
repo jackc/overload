@@ -93,6 +93,7 @@ func main() {
 	var args []string
 
 	parser := flags.NewParser(&opts, flags.Default)
+	parser.Usage = "[options] URL"
 	if args, err = parser.Parse(); err != nil {
 		return
 	}
