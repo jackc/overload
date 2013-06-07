@@ -9,10 +9,13 @@ import (
 	"time"
 )
 
+const VERSION = "0.1.0"
+
 var opts struct {
 	NumRequests int  `short:"r" long:"num-requests" description:"Number of requests to make" default:"1"`
 	Concurrent  int  `short:"c" long:"concurrent" description:"Number of concurrent connections to make" default:"1"`
 	KeepAlive   bool `short:"k" long:"keep-alive" description:"Use keep alive connection"`
+	Version     bool `long:"version" description:"Display version and exit"`
 }
 
 type result struct {
@@ -95,6 +98,11 @@ func main() {
 	parser := flags.NewParser(&opts, flags.Default)
 	parser.Usage = "[options] URL"
 	if args, err = parser.Parse(); err != nil {
+		return
+	}
+
+	if opts.Version {
+		fmt.Println("overload " + VERSION)
 		return
 	}
 
