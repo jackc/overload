@@ -33,6 +33,7 @@ type Summary struct {
 	numSuccesses         int
 	numFailures          int
 	numUnavailables      int
+	requestsPerSecond    float64
 }
 
 var requestChan chan *http.Request
@@ -88,6 +89,7 @@ func summarizeResults(numRequests int, startTime time.Time) {
 
 	summary.duration = time.Since(startTime)
 	summary.avgRequestDuration = time.Duration(int64(summary.totalRequestDuration) / int64(summary.numSuccesses))
+	summary.requestsPerSecond = float64(summary.numSuccesses) / summary.duration.Seconds()
 	summaryChan <- summary
 }
 
@@ -135,4 +137,5 @@ func main() {
 	fmt.Printf("# Unavailable: %v\n", summary.numUnavailables)
 	fmt.Printf("Duration: %v\n", summary.duration)
 	fmt.Printf("Average Request Duration: %v\n", summary.avgRequestDuration)
+	fmt.Printf("Requests Per Second: %f\n", summary.requestsPerSecond)
 }
