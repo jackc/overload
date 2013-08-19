@@ -88,7 +88,9 @@ func summarizeResults(numRequests int, startTime time.Time) {
 	}
 
 	summary.duration = time.Since(startTime)
-	summary.avgRequestDuration = time.Duration(int64(summary.totalRequestDuration) / int64(summary.numSuccesses))
+	if 0 < summary.numSuccesses {
+		summary.avgRequestDuration = time.Duration(int64(summary.totalRequestDuration) / int64(summary.numSuccesses))
+	}
 	summary.requestsPerSecond = float64(summary.numSuccesses) / summary.duration.Seconds()
 	summaryChan <- summary
 }
