@@ -65,13 +65,15 @@ func doRequests() {
 func generateRequests(target string, headers []string, numRequests int) {
 	request, err := http.NewRequest("GET", target, nil)
 	if err != nil {
-		panic("Bad target")
+		fmt.Fprintf(os.Stderr, "Unable to create HTTP request - %v\n", err)
+		os.Exit(1)
 	}
 
 	for _, h := range headers {
 		parts := strings.SplitN(h, ":", 2)
 		if len(parts) != 2 {
-			panic("Header must have key and value separated by ':'")
+			fmt.Fprintf(os.Stderr, "Invalid header - %s\n", h)
+			os.Exit(1)
 		}
 		request.Header.Add(parts[0], parts[1])
 	}
