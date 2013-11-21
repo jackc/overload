@@ -6,16 +6,18 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
 const VERSION = "0.1.0"
 
 var opts struct {
-	NumRequests int  `short:"r" long:"num-requests" description:"Number of requests to make" default:"1"`
-	Concurrent  int  `short:"c" long:"concurrent" description:"Number of concurrent connections to make" default:"1"`
-	KeepAlive   bool `short:"k" long:"keep-alive" description:"Use keep alive connection"`
-	Version     bool `long:"version" description:"Display version and exit"`
+	NumRequests int      `short:"r" long:"num-requests" description:"Number of requests to make" default:"1"`
+	Concurrent  int      `short:"c" long:"concurrent" description:"Number of concurrent connections to make" default:"1"`
+	KeepAlive   bool     `short:"k" long:"keep-alive" description:"Use keep alive connection"`
+	Headers     []string `short:"H" long:"header" description:"Header to include in request (can be used multiple times)"`
+	Version     bool     `long:"version" description:"Display version and exit"`
 }
 
 type result struct {
@@ -60,11 +62,20 @@ func doRequests() {
 	}
 }
 
-func generateRequests(target string, numRequests int) {
+func generateRequests(target string, headers []string, numRequests int) {
 	request, err := http.NewRequest("GET", target, nil)
 	if err != nil {
 		panic("Bad target")
 	}
+
+	for _, h := range headers {
+		parts := strings.SplitN(h, ":", 2)
+		if len(parts) != 2 {
+			panic("Header must have key and value separated by ':'")
+		}
+		request.Header.Add(parts[0], parts[1])
+	}
+
 	for i := 0; i < numRequests; i++ {
 		requestChan <- request
 	}
@@ -128,7 +139,7 @@ func main() {
 	for i := 0; i < opts.Concurrent; i++ {
 		go doRequests()
 	}
-	go generateRequests(target, opts.NumRequests)
+	go generateRequests(target, opts.Headers, opts.NumRequests)
 	go summarizeResults(opts.NumRequests, startTime)
 
 	summary := <-summaryChan
