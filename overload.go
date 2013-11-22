@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -36,6 +37,7 @@ type Summary struct {
 	numFailures          int
 	numUnavailables      int
 	requestsPerSecond    float64
+	totalBytesRead       int
 }
 
 var requestChan chan *http.Request
@@ -52,13 +54,13 @@ func doRequests() {
 			continue
 
 		}
-		body, err := ioutil.ReadAll(response.Body)
+		bytesRead, err := io.Copy(ioutil.Discard, response.Body)
 		if err != nil {
 			resultChan <- &result{err: err}
 			continue
 		}
 
-		resultChan <- &result{duration: time.Since(startTime), statusCode: response.StatusCode, bytesRead: len(body)}
+		resultChan <- &result{duration: time.Since(startTime), statusCode: response.StatusCode, bytesRead: int(bytesRead)}
 	}
 }
 
@@ -97,6 +99,7 @@ func summarizeResults(numRequests int, startTime time.Time) {
 		} else {
 			summary.numSuccesses++
 			summary.totalRequestDuration += result.duration
+			summary.totalBytesRead += result.bytesRead
 		}
 	}
 
@@ -153,4 +156,5 @@ func main() {
 	fmt.Printf("Duration: %v\n", summary.duration)
 	fmt.Printf("Average Request Duration: %v\n", summary.avgRequestDuration)
 	fmt.Printf("Requests Per Second: %f\n", summary.requestsPerSecond)
+	fmt.Printf("Bytes Received (excluding headers): %d\n", summary.totalBytesRead)
 }
