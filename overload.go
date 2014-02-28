@@ -19,6 +19,7 @@ var opts struct {
 	Concurrent  int      `short:"c" long:"concurrent" description:"Number of concurrent connections to make" default:"1"`
 	KeepAlive   bool     `short:"k" long:"keep-alive" description:"Use keep alive connection"`
 	Headers     []string `short:"H" long:"header" description:"Header to include in request (can be used multiple times)"`
+	NoGzip      bool     `long:"no-gzip" description:"Disable gzip accept encoding"`
 	SecureTLS   bool     `long:"secure-tls" description:"Validate TLS certificates"`
 	Version     bool     `long:"version" description:"Display version and exit"`
 }
@@ -71,6 +72,10 @@ func generateRequests(target string, headers []string, numRequests int) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create HTTP request - %v\n", err)
 		os.Exit(1)
+	}
+
+	if !opts.NoGzip {
+		request.Header.Add("Accept-Encoding", "gzip")
 	}
 
 	for _, h := range headers {
@@ -139,8 +144,9 @@ func main() {
 	resultChan = make(chan *result)
 	summaryChan = make(chan *Summary)
 	transport := &http.Transport{
-		DisableKeepAlives: !opts.KeepAlive,
-		TLSClientConfig:   &tls.Config{InsecureSkipVerify: !opts.SecureTLS},
+		DisableKeepAlives:  !opts.KeepAlive,
+		TLSClientConfig:    &tls.Config{InsecureSkipVerify: !opts.SecureTLS},
+		DisableCompression: true,
 	}
 	client = &http.Client{Transport: transport}
 
