@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/jessevdk/go-flags"
 	"io"
@@ -18,6 +19,7 @@ var opts struct {
 	Concurrent  int      `short:"c" long:"concurrent" description:"Number of concurrent connections to make" default:"1"`
 	KeepAlive   bool     `short:"k" long:"keep-alive" description:"Use keep alive connection"`
 	Headers     []string `short:"H" long:"header" description:"Header to include in request (can be used multiple times)"`
+	SecureTLS   bool     `long:"secure-tls" description:"Validate TLS certificates"`
 	Version     bool     `long:"version" description:"Display version and exit"`
 }
 
@@ -136,7 +138,10 @@ func main() {
 	requestChan = make(chan *http.Request)
 	resultChan = make(chan *result)
 	summaryChan = make(chan *Summary)
-	transport := &http.Transport{DisableKeepAlives: !opts.KeepAlive}
+	transport := &http.Transport{
+		DisableKeepAlives: !opts.KeepAlive,
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: !opts.SecureTLS},
+	}
 	client = &http.Client{Transport: transport}
 
 	startTime := time.Now()
