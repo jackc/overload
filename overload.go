@@ -144,9 +144,10 @@ func main() {
 	resultChan = make(chan *result)
 	summaryChan = make(chan *Summary)
 	transport := &http.Transport{
-		DisableKeepAlives:  !opts.KeepAlive,
-		TLSClientConfig:    &tls.Config{InsecureSkipVerify: !opts.SecureTLS},
-		DisableCompression: true,
+		DisableKeepAlives:   !opts.KeepAlive,
+		MaxIdleConnsPerHost: opts.Concurrent,
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: !opts.SecureTLS},
+		DisableCompression:  true,
 	}
 	client = &http.Client{Transport: transport}
 
