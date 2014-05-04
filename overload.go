@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const VERSION = "0.2.2"
+const VERSION = "0.2.3"
 
 var opts struct {
 	NumRequests int      `short:"r" long:"num-requests" description:"Number of requests to make" default:"1"`
