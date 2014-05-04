@@ -27,3 +27,7 @@ Sample:
 ## Why another HTTP load tester / benchmark?
 
 ab is broken on the Mac and siege does not support keep alive. Plus, it was fun.
+
+## Dependency Management
+
+overload uses [godep](https://github.com/tools/godep) to lock dependencies.
