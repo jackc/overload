@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/JackC/overload",
+	"GoVersion": "go1.2.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/jessevdk/go-flags",
+			"Comment": "v1-70-g7503383",
+			"Rev": "75033837426208a20a080e564b2a1362b03b145a"
+		}
+	]
+}
