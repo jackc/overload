@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/JackC/overload",
+	"ImportPath": "github.com/jackc/overload",
 	"GoVersion": "go1.2.1",
 	"Deps": [
 		{
